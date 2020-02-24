@@ -45,7 +45,10 @@ def create_app(test_config=None):
     '''
     @app.route('/categories')
     def get_categories():
-        categories = list(map(Category.format, Category.query.all()))
+        categories = {}
+        for category in Category.query.all():
+            categories[category.id] = category.type
+
         return jsonify({
             "success": True,
             "categories": categories
@@ -68,7 +71,9 @@ def create_app(test_config=None):
     def retrieve_questions():
         selection = Question.query.order_by(Question.id).all()
         current_questions = paginate_questions(request, selection)
-        categories = list(map(Question.format, Question.query.all()))
+        categories = {}
+        for category in Category.query.all():
+            categories[category.id] = category.type
 
         if len(current_questions) == 0:
             abort(404)
@@ -158,20 +163,20 @@ def create_app(test_config=None):
     @app.route("/searchQuestions", methods=['POST'])
     def search():
         if request.data:
-            page = request.args.get('page',1 ,type=int)
             search_data = json.loads(request.data.decode('utf-8'))
 
             if 'searchTerm' in search_data:
-                questions_query = Question.query.filter(Question.question.like('%' + search_data['searchTerm'] + '%')).paginate(page, QUESTIONS_PER_PAGE, False)
-                questions = list(map(Question.format, questions_query.items))
+                questions_query = Question.query.filter(Question.question.like('%' + search_data['searchTerm'] + '%')).all()
+                questions = list(map(Question.format, questions_query))
                 if len(questions) > 0:
                     result = {
                         "success": True,
                         "questions": questions,
-                        "total_questions": questions_query.total,
+                        "total_questions": len(questions_query),
                         "current_category": None,
                     }
                     return jsonify(result)
+
             abort(404)
         abort(422)
 
@@ -185,20 +190,22 @@ def create_app(test_config=None):
     '''
     @app.route("/categories/<int:category_id>/questions")
     def get_question_by_category(category_id):
-        page = request.args.get('page', 1, type=int)
         category_data = Category.query.get(category_id)
-        questions_data = Question.query.filter_by(category=category_id).paginate(page, QUESTIONS_PER_PAGE, False)
-        questions = list(map(Question.format, questions_data.items))
+        categories = list(map(Category.format, Category.query.all()))
+        questions_data = Question.query.filter_by(category=category_id).all()
+        questions = list(map(Question.format, questions_data))
 
-        if len(questions) > 0:
-            result = {
-                "success": True,
-                "questions": questions,
-                "total_questions": questions_data.total,
-                "current_category": Category.format(category_data),
-            }
+        if len(questions) == 0:
+            abort(404)
+
+        result = {
+            "success": True,
+            "questions": questions,
+            "categories": categories,
+            "total_questions": len(questions_data),
+            "current_category": Category.format(category_data),
+        }
         return jsonify(result)
-        abort(404)
 
     '''
     @TODO:
