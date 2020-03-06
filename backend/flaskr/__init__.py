@@ -25,7 +25,8 @@ def create_app(test_config=None):
     setup_db(app)
 
     '''
-    @TODO: Set up CORS. Allow '*' for origins. Delete the sample route after completing the TODOs
+    @TODO: Set up CORS. Allow '*' for origins. Delete the sample route \
+        after completing the TODOs
     '''
     cors = CORS(app, resources={"/": {"origins": "*"}})
 
@@ -34,8 +35,10 @@ def create_app(test_config=None):
     '''
     @app.after_request
     def after_request(response):
-        response.headers.add('Access-Control-Allow-Headers', 'Content-Type, Authorization, true')
-        response.headers.add('Access-Control-Allow-Methods', 'GET, PATCH, POST, DELETE, OPTIONS')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type, \
+            Authorization, true')
+        response.headers.add('Access-Control-Allow-Methods', 'GET, PATCH,\
+             POST, DELETE, OPTIONS')
         return response
 
     '''
@@ -64,7 +67,8 @@ def create_app(test_config=None):
 
     TEST: At this point, when you start the application
     you should see questions and categories generated,
-    ten questions per page and pagination at the bottom of the screen for three pages.
+    ten questions per page and pagination at the bottom of the screen \
+        for three pages.
     Clicking on the page numbers should update the questions.
     '''
     @app.route('/questions')
@@ -90,13 +94,15 @@ def create_app(test_config=None):
     @TODO:
     Create an endpoint to DELETE question using a question ID.
 
-    TEST: When you click the trash icon next to a question, the question will be removed.
+    TEST: When you click the trash icon next to a question, the question \
+        will be removed.
     This removal will persist in the database and when you refresh the page.
     '''
-    @app.route('/questions/<int:id>', methods=['DELETE'])
-    def delete_question(id):
+    @app.route('/questions/<int:question_id>', methods=['DELETE'])
+    def delete_question(question_id):
         try:
-            question = Question.query.filter(Question.id == id).one_or_none()
+            question = Question.query.filter(Question.id == question_id)\
+                .one_or_none()
 
             if question is None:
                 abort(404)
@@ -112,7 +118,7 @@ def create_app(test_config=None):
                 'questions': current_questions,
                 'total_questions': len(Question.query.all())
             })
-        except:
+        except Exception:
             abort(422)
 
     '''
@@ -122,7 +128,8 @@ def create_app(test_config=None):
     category, and difficulty score.
 
     TEST: When you submit a question on the "Add" tab,
-    the form will clear and the question will appear at the end of the last page
+    the form will clear and the question will appear at the end of the \
+        last page
     of the questions list in the "List" tab.
     '''
     @app.route('/questions', methods=['POST'])
@@ -147,7 +154,7 @@ def create_app(test_config=None):
                 'questions': current_questions,
                 'total_questions': len(Question.query.all())
             })
-        except:
+        except Exception:
             abort(422)
 
     '''
@@ -166,7 +173,10 @@ def create_app(test_config=None):
             search_data = json.loads(request.data.decode('utf-8'))
 
             if 'searchTerm' in search_data:
-                questions_query = Question.query.filter(Question.question.like('%' + search_data['searchTerm'] + '%')).all()
+                questions_query = Question.query.filter(
+                    Question.question
+                    .like('%' + search_data['searchTerm'] + '%')
+                ).all()
                 questions = list(map(Question.format, questions_query))
                 if len(questions) > 0:
                     result = {
@@ -176,7 +186,6 @@ def create_app(test_config=None):
                         "current_category": None,
                     }
                     return jsonify(result)
-
             abort(404)
         abort(422)
 
@@ -209,7 +218,7 @@ def create_app(test_config=None):
 
     '''
     @TODO:
-    Create a POST endpoint to get questions to play the quiz.
+    Create a POST endpoint to get questions to play the .
     This endpoint should take category and previous question parameters
     and return a random questions within the given category,
     if provided, and that is not one of the previous questions.
@@ -221,14 +230,25 @@ def create_app(test_config=None):
     @app.route('/quizzes', methods=['POST'])
     def get_question_for_quiz():
         if request.data:
-            search_data = json.loads(request.data.decode('utf-8'))
-            if (('quiz_category' in search_data and 'id' in search_data['quiz_category']) and 'previous_questions' in search_data):
-                questions_query = Question.query.filter_by(category=search_data['quiz_category']['id']).filter(Question.id.notin_(search_data["previous_questions"])).all()
+            search_data = request.get_data('search_term')
+            if (('quiz_category' in search_data
+                and 'id' in search_data['quiz_category'])
+                    and 'previous_questions' in search_data):
+                questions_query = Question.query \
+                    .filter_by(category=search_data['quiz_category']['id']) \
+                    .filter(Question
+                            .id.notin_(search_data["previous_questions"]))\
+                    .all()
                 length_of_available_question = len(questions_query)
                 if length_of_available_question > 0:
                     result = {
                         "success": True,
-                        "question": Question.format(questions_query[random.randrange(0, length_of_available_question)])
+                        "question": Question.format(
+                            questions_query[random.randrange(
+                                0,
+                                length_of_available_question
+                            )]
+                        )
                     }
                 else:
                     result = {
@@ -249,11 +269,11 @@ def create_app(test_config=None):
         return jsonify({
             "success": False,
             "error": 422,
-            "message": "Unproceessable"
+            "message": "Unprocessable"
         }), 422
 
     @app.errorhandler(404)
-    def not_fount(error):
+    def not_found(error):
         return jsonify({
             "success": False,
             "error": 404,
